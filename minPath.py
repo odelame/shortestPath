@@ -7,9 +7,6 @@ import pygame
 from argparse import ArgumentParser
 from enum import Enum
 from colors import *
-from math import inf
-
-from llist import sllist
 
 DEFAULT_SQUARE_SIZE = 20
 DEFAULT_WIDTH = 50
@@ -87,7 +84,11 @@ class Board:
         if self.edges == None:
             self.edges = set()
             self.been_in = dict()
-            self.been_in[0, 0] = (0, 0)
+            if self[0, 0] == Board.Square.empty:
+                self.been_in[0, 0] = (0, 0)
+            else:
+                pygame.event.post(pygame.event.Event(UNSOLVABLE))
+                return True
             self.edges.add((0, 0))  
             self[0, 0] = Board.Square.used
             
@@ -139,7 +140,7 @@ def draw_msg(win, text):
     draw_text = pygame.font.SysFont('comicsans', 100).render(text, 1, WHITE)
     win.blit(draw_text, (win.get_size()[0] // 2 - draw_text.get_width() // 2, win.get_size()[1] // 2 - draw_text.get_height() // 2))
     pygame.display.update()
-    pygame.time.delay(5000)    
+    pygame.time.delay(2000)    
 
 def main(width, height, square_size):
     clock = pygame.time.Clock()
