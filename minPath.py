@@ -89,6 +89,7 @@ class Board:
             else:
                 pygame.event.post(pygame.event.Event(UNSOLVABLE))
                 return True
+            
             self.edges.add((0, 0))  
             self[0, 0] = Board.Square.used
             
@@ -120,11 +121,6 @@ class Board:
                 
         self.edges = new_edges
         return ended
-    
-    def clear(self):
-        self._screen_matrix = [[Board.Square.empty] * self.height for i in range(self.width)]
-        self.edges = None
-        self.been_in = None   
     
     def clear_solution(self):
         self.edges = None
@@ -172,7 +168,7 @@ def main(width, height, square_size):
                         board.draw(win)
                         pygame.display.update()   
                 elif event.key == pygame.K_SPACE:
-                    board.clear()
+                    board = Board(width, height)
                 elif event.key == pygame.K_BACKSPACE:
                     board.clear_solution()
                     
