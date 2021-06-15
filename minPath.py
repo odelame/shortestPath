@@ -4,7 +4,7 @@ from os import environ
 environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 
 import pygame
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from enum import Enum
 from colors import *
 
@@ -80,7 +80,7 @@ class Board:
                 elif self[col, row] == Board.Square.solution:
                      pygame.draw.rect(win, RED, (SQUARE_SIZE * col,  SQUARE_SIZE * row, SQUARE_SIZE, SQUARE_SIZE))        
     
-    def __call__(self):        
+    def __call__(self, paint=Square.used):        
         if self.edges == None:
             self.edges = set()
             self.been_in = dict()
@@ -91,7 +91,7 @@ class Board:
                 return True
             
             self.edges.add((0, 0))  
-            self[0, 0] = Board.Square.used
+            self[0, 0] = paint
             
             return False
         
@@ -103,7 +103,7 @@ class Board:
                 if next not in self.been_in:
                     new_edges.add(next)
                     self.been_in[next] = coord
-                    self[next] = Board.Square.used
+                    self[next] = paint
                     
                     if next == (self.width - 1, self.height - 1):
                         pos = (self.width - 1, self.height - 1)
@@ -122,6 +122,10 @@ class Board:
         self.edges = new_edges
         return ended
     
+    def solve(self):
+        while not self(paint=Board.Square.empty):
+            pass
+            
     def clear_solution(self):
         self.edges = None
         self.been_in = None 
@@ -166,12 +170,14 @@ def main(width, height, square_size):
                     while not board():
                         clock.tick(SOLVE_SPEED) 
                         board.draw(win)
-                        pygame.display.update()   
+                        pygame.display.update()  
+                elif event.key == pygame.K_TAB:
+                    board.solve()
                 elif event.key == pygame.K_SPACE:
                     board = Board(width, height)
                 elif event.key == pygame.K_BACKSPACE:
                     board.clear_solution()
-                    
+                
             elif event.type == UNSOLVABLE:
                 draw_msg(win, "No Path Exists")
                 board.clear_solution()                       
@@ -190,10 +196,20 @@ def main(width, height, square_size):
 
 
 if __name__ == "__main__":
-    parser = ArgumentParser()      
-    parser.add_argument("-height", help="number of squares to the height of the window", action="store", type=int, default=DEFAULT_HEIGHT)
-    parser.add_argument("-width", help="number of squares to the width of the height", action="store", type=int, default=DEFAULT_WIDTH)
-    parser.add_argument("-squaresize", help="size of the squares to use", action="store", type=int, default=DEFAULT_SQUARE_SIZE)
+    parser = ArgumentParser(
+        formatter_class=RawDescriptionHelpFormatter,
+        description="""
+    Use the left mouse click to add a block to the screen.
+    Use the right mouse click to remove a block from the screen.
+    Use the enter key to find the shortest path from top-left to bottom-right.
+    Use the tab key to find the shortest path instantly.
+    Use the backspace key to delete the solution.
+    Use the spacebar to clear the screen.
+        """
+    )      
+    parser.add_argument("-he", "--height", help="number of squares to the height of the window", action="store", type=int, default=DEFAULT_HEIGHT)
+    parser.add_argument("-w", "--width", help="number of squares to the width of the window", action="store", type=int, default=DEFAULT_WIDTH)
+    parser.add_argument("-s", "--squaresize", help="size of the squares to use", action="store", type=int, default=DEFAULT_SQUARE_SIZE)
     args = parser.parse_args()
     
     main(height=args.height, width=args.width, square_size=args.squaresize)
