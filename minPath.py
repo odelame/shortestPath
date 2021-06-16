@@ -84,9 +84,8 @@ class Board:
         if self.edges == None:
             self.edges = set()
             self.been_in = dict()
-            if self[0, 0] == Board.Square.empty:
-                self.been_in[0, 0] = (0, 0)
-            else:
+            self.been_in[0, 0] = (0, 0)
+            if self[0, 0] == Board.Square.blocked:
                 pygame.event.post(pygame.event.Event(UNSOLVABLE))
                 return True
             
@@ -117,10 +116,17 @@ class Board:
                     
         if new_edges == self.edges:
             pygame.event.post(pygame.event.Event(UNSOLVABLE))
+            self.edges = None
+            self.been_in = None 
             return True
-                
+        
+        if ended:
+            self.edges = None
+            self.been_in = None 
+            return True
+        
         self.edges = new_edges
-        return ended
+        return False
     
     def solve(self):
         while not self(paint=Board.Square.empty):
