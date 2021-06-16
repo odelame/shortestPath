@@ -134,7 +134,7 @@ class Board:
     
     def _get_next(self, x, y):
         next = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
-        return [coord for coord in next if 0 <= coord[0] < self.width and 0 <= coord[1] < self.height and self[coord] == Board.Square.empty]
+        return [coord for coord in next if 0 <= coord[0] < self.width and 0 <= coord[1] < self.height and self[coord] != Board.Square.blocked]
     
 def draw_msg(win, text):
     draw_text = pygame.font.SysFont('comicsans', 100).render(text, 1, WHITE)
@@ -177,7 +177,9 @@ def main(width, height, square_size):
                     board = Board(width, height)
                 elif event.key == pygame.K_BACKSPACE:
                     board.clear_solution()
-                
+                elif event.key == pygame.K_c:
+                    board()
+                    
             elif event.type == UNSOLVABLE:
                 draw_msg(win, "No Path Exists")
                 board.clear_solution()                       
