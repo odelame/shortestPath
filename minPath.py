@@ -45,10 +45,12 @@ class Board:
     def __getitem__(self, pos):
         return self._screen_matrix[pos[0]][pos[1]]
     
+    # handle user clicking on the board
     def click(self, x, y):
         if self[x, y] == Board.Square.empty:
             self[x, y] = Board.Square.blocked
     
+    # undo user clicking on the board
     def undo(self, x, y):
         if self[x, y] == Board.Square.blocked:
             self[x, y] = Board.Square.empty
@@ -67,12 +69,16 @@ class Board:
     def height(self):
         return self._height
     
+    # draw the board to win
     def draw(self, win):
+        # size of "pixel" to print on
         SQUARE_SIZE = win.get_size()[0] // self.width
         win.fill(BLACK)
                 
+        # print all the squared which are not empty each one with his own color.
         for col in range(self.width):
             for row in range(self.height):        
+                # location on the board to print is col "pixels" and row "pixels" from the top left
                 if self[col, row] == Board.Square.blocked:
                     pygame.draw.rect(win, BLUE, (SQUARE_SIZE * col,  SQUARE_SIZE * row, SQUARE_SIZE, SQUARE_SIZE))
                 elif self[col, row] == Board.Square.used:
@@ -80,30 +86,54 @@ class Board:
                 elif self[col, row] == Board.Square.solution:
                      pygame.draw.rect(win, RED, (SQUARE_SIZE * col,  SQUARE_SIZE * row, SQUARE_SIZE, SQUARE_SIZE))        
     
-    def __call__(self, paint=Square.used):        
+    # move one step to solve the shortest path, mark the places that are reached.
+    # when solved mark the solution
+    def __call__(self, paint=Square.used):     
+        """[Moves one click toward the bottom right]
+
+        Args:
+            paint ([Square], optional): [What to put in the empty squares that will be reached]. Defaults to Square.used.
+
+        Returns:
+            [bool]: [Did we finish, wither find the solution or reached a block]
+        """
+        
+        # if first run, mark the top left and initialize the been_in = squares where we already arrived.
+        # edges => locations at the end where we "grow" from 
         if self.edges == None:
-            self.edges = set()
+            self.edges = []
             self.been_in = dict()
+            # only been in top left, and only edge it top left.
             self.been_in[0, 0] = (0, 0)
+            self.edges.append((0, 0))  
+
+            # if top left is blocked there is no solution.
             if self[0, 0] == Board.Square.blocked:
                 pygame.event.post(pygame.event.Event(UNSOLVABLE))
                 return True
             
-            self.edges.add((0, 0))  
+            # paint the top left.
             self[0, 0] = paint
             
             return False
         
-        new_edges = set()
+        # list of the new edges at the "border"
+        new_edges = []
+        # have we reached the end
         ended = False
         
+        # for each point on the border
         for coord in self.edges:
+            # for all it's neighboard which are not blocked or been in:
             for next in self._get_next(*coord):
                 if next not in self.been_in:
-                    new_edges.add(next)
+                    # add then to the new adges
+                    new_edges.append(next)
+                    # set it to the dictionary of where we were and how we got there
                     self.been_in[next] = coord
                     self[next] = paint
                     
+                    # if we reached the end, mark the solution
                     if next == (self.width - 1, self.height - 1):
                         pos = (self.width - 1, self.height - 1)
                         
@@ -111,37 +141,42 @@ class Board:
                             self[pos] = Board.Square.solution
                             pos = self.been_in[pos]
                         
+                        # set the variables and reset the edges and been in to None for next usage
                         self[0, 0] = Board.Square.solution
-                        ended = True
-                    
+                        self.edges = None
+                        self.been_in = None 
+                        return True
+        
+        # if we reached a block          
         if new_edges == self.edges:
+            # there is no solution
             pygame.event.post(pygame.event.Event(UNSOLVABLE))
             self.edges = None
             self.been_in = None 
             return True
         
-        if ended:
-            self.edges = None
-            self.been_in = None 
-            return True
-        
+        # keep the new edges
         self.edges = new_edges
         return False
     
+    # draw the solution and only the solution
     def solve(self):
         while not self(paint=Board.Square.empty):
             pass
-            
+    
+    # remove all the marking in the solution process
     def clear_solution(self):
         self.edges = None
         self.been_in = None 
+        # remove all the "non-blocked" marking from the board.
         self._screen_matrix = [[self[i, j] if self[i ,j] == Board.Square.blocked else Board.Square.empty for j in range(self.height)] for i in range(self.width)]
  
-    
+    # given a coordinates, return all the neighbors you can go to from it.
     def _get_next(self, x, y):
         next = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
         return [coord for coord in next if 0 <= coord[0] < self.width and 0 <= coord[1] < self.height and self[coord] != Board.Square.blocked]
     
+# print a msg to the screen for 2 seconds
 def draw_msg(win, text):
     draw_text = pygame.font.SysFont('comicsans', 100).render(text, 1, WHITE)
     win.blit(draw_text, (win.get_size()[0] // 2 - draw_text.get_width() // 2, win.get_size()[1] // 2 - draw_text.get_height() // 2))
@@ -173,6 +208,7 @@ def main(width, height, square_size):
                 rightclick_down = pygame.mouse.get_pressed()[2]
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
+                    board.clear_solution()
                     while not board():
                         clock.tick(SOLVE_SPEED) 
                         board.draw(win)
