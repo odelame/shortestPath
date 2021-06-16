@@ -45,15 +45,13 @@ class Board:
     def __getitem__(self, pos):
         return self._screen_matrix[pos[0]][pos[1]]
     
-    # handle user clicking on the board
-    def click(self, x, y):
-        if self[x, y] == Board.Square.empty:
-            self[x, y] = Board.Square.blocked
+    # block a coordinate
+    def block(self, x, y):
+        self[x, y] = Board.Square.blocked
     
-    # undo user clicking on the board
-    def undo(self, x, y):
-        if self[x, y] == Board.Square.blocked:
-            self[x, y] = Board.Square.empty
+    # unblock a coordinate
+    def delete(self, x, y):
+        self[x, y] = Board.Square.empty
     
     def __str__(self):
         return '\n'.join([str([self[i, j] for i in range(self.width)]) for j in range(self.height)])        
@@ -161,6 +159,7 @@ class Board:
     
     # draw the solution and only the solution
     def solve(self):
+        self.clear_solution()
         while not self(paint=Board.Square.empty):
             pass
     
@@ -228,11 +227,11 @@ def main(width, height, square_size):
                 
         if mouse_down:
             click = (pygame.mouse.get_pos()[0] // square_size, pygame.mouse.get_pos()[1] // square_size)
-            board.click(*click)
+            board.block(*click)
          
         if rightclick_down:
             click = (pygame.mouse.get_pos()[0] // square_size, pygame.mouse.get_pos()[1] // square_size)
-            board.undo(*click)
+            board.delete(*click)
             
         board.draw(win)
         pygame.display.update()
