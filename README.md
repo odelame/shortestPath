@@ -7,7 +7,7 @@ while avoiding all the blocks in the way.
 
 Install Python3.9 from: [Python3.9](https://www.python.org/downloads/) to run the game.
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install pygame and llist.
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install pygame.
 
 ```
 pip install -r requirements.txt
